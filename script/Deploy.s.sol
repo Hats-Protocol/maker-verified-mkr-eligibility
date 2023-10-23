@@ -7,15 +7,15 @@ import { MKRVerifier } from "../src/MKRVerifier.sol";
 contract Deploy is Script {
   MKRVerifier public mkrVerifier;
   bytes32 public SALT = bytes32(abi.encode("change this to the value of your choice"));
+  uint256 public moderatorHat;
 
   // default values
-  bool internal _verbose = true;
-  string internal _version = "0.0.1"; // increment this with each new deployment
+  bool internal _verbose = false;
 
   /// @dev Override default values, if desired
-  function prepare(bool verbose, string memory version) public {
+  function prepare(bool verbose, uint256 _moderatorHat) public {
     _verbose = verbose;
-    _version = version;
+    moderatorHat = _moderatorHat;
   }
 
   /// @dev Set up the deployer via their private key from the environment
@@ -42,29 +42,11 @@ contract Deploy is Script {
      *       never differs regardless of where its being compiled
      *    2. The provided salt, `SALT`
      */
-    mkrVerifier = new MKRVerifier{ salt: SALT}();
+    mkrVerifier = new MKRVerifier{ salt: SALT}(moderatorHat);
 
     vm.stopBroadcast();
 
     _log("");
-  }
-}
-
-/// @dev Deploy pre-compiled ir-optimized bytecode to a non-deterministic address
-contract DeployPrecompiled is Deploy {
-  /// @dev Update SALT and default values in Deploy contract
-
-  function run() public override {
-    vm.startBroadcast(deployer());
-
-    bytes memory args = abi.encode( /* insert constructor args here */ );
-
-    /// @dev Load and deploy pre-compiled ir-optimized bytecode.
-    mkrVerifier = MKRVerifier(deployCode("optimized-out/Module.sol/Module.json", args));
-
-    vm.stopBroadcast();
-
-    _log("Precompiled ");
   }
 }
 
@@ -77,10 +59,9 @@ forge script script/Deploy.s.sol -f mainnet
 forge script script/Deploy.s.sol -f mainnet --broadcast --verify
 
 ## C. Fix verification issues (replace values in curly braces with the actual values)
-forge verify-contract --chain-id 1 --num-of-optimizations 1000000 --watch --constructor-args $(cast abi-encode \
- "constructor({args})" "{arg1}" "{arg2}" "{argN}" ) \ 
- --compiler-version v0.8.19 {deploymentAddress} \
- src/{Counter}.sol:{Counter} --etherscan-api-key $ETHERSCAN_KEY
+forge verify-contract --chain-id 5 --num-of-optimizations 1000000 --watch \
+ --compiler-version v0.8.19 0x1b7878735d0d713A90ead372837ADCCedC988970 \
+ src/MKRVerifier.sol:MKRVerifier --etherscan-api-key $ETHERSCAN_KEY
 
 ## D. To verify ir-optimized contracts on etherscan...
   1. Run (C) with the following additional flag: `--show-standard-json-input > etherscan.json`

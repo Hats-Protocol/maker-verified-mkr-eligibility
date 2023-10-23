@@ -1,7 +1,7 @@
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
 hats-protocol/=lib/hats-protocol/src/
+solady/=lib/solady/src/
 ERC1155/=lib/hats-protocol/lib/ERC1155/
-solady/=lib/hats-protocol/lib/solady/
 solbase/=lib/hats-protocol/lib/solbase/src/
 utils/=lib/hats-protocol/lib/utils/
