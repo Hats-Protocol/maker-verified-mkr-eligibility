@@ -7,15 +7,15 @@ import { MKRVerifier } from "../src/MKRVerifier.sol";
 contract Deploy is Script {
   MKRVerifier public mkrVerifier;
   bytes32 public SALT = bytes32(abi.encode("change this to the value of your choice"));
-  uint256 public moderatorHat;
+  uint256 public facilitatorHat;
 
   // default values
   bool internal _verbose = false;
 
   /// @dev Override default values, if desired
-  function prepare(bool verbose, uint256 _moderatorHat) public {
+  function prepare(bool verbose, uint256 _facilitatorHat) public {
     _verbose = verbose;
-    moderatorHat = _moderatorHat;
+    facilitatorHat = _facilitatorHat;
   }
 
   /// @dev Set up the deployer via their private key from the environment
@@ -42,7 +42,7 @@ contract Deploy is Script {
      *       never differs regardless of where its being compiled
      *    2. The provided salt, `SALT`
      */
-    mkrVerifier = new MKRVerifier{ salt: SALT}(moderatorHat);
+    mkrVerifier = new MKRVerifier{ salt: SALT}(facilitatorHat);
 
     vm.stopBroadcast();
 

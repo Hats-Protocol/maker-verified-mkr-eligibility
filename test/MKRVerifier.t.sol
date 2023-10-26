@@ -17,7 +17,7 @@ contract MKRVerifierTest is Deploy, Test {
   /// @dev variables inhereted from Deploy script
   // MKRVerifier public mkrVerifier;
   // bytes32 public SALT;
-  // uint256 public moderatorHat;
+  // uint256 public facilitatorHat;
 
   uint256 public fork;
   uint256 public BLOCK_NUMBER = 17_671_864; // deployment block for Hats.sol
@@ -31,7 +31,7 @@ contract MKRVerifierTest is Deploy, Test {
   event MKRRegistered(address ecosystemActor, uint256 amount, string message);
 
   address public dao = makeAddr("dao");
-  address public moderator = makeAddr("moderator");
+  address public facilitator = makeAddr("facilitator");
   address public actor1;
   address public actor2;
   address public nonActor;
@@ -57,12 +57,12 @@ contract MKRVerifierTest is Deploy, Test {
 
     // set up the hats
     tophat = HATS.mintTopHat(address(this), "tophat", "image/tophat");
-    moderatorHat =
-      HATS.createHat(tophat, "moderator", 1, makeAddr("eligibility"), makeAddr("toggle"), true, "image/moderator");
-    HATS.mintHat(moderatorHat, moderator);
+    facilitatorHat =
+      HATS.createHat(tophat, "facilitator", 1, makeAddr("eligibility"), makeAddr("toggle"), true, "image/facilitator");
+    HATS.mintHat(facilitatorHat, facilitator);
 
     // deploy mkrVerifier via the script
-    prepare(false, moderatorHat);
+    prepare(false, facilitatorHat);
     run();
 
     // deal MKR to actor1 and actor2
@@ -122,37 +122,37 @@ contract SelfRegistering is MKRVerifierTest {
   }
 }
 
-contract ModeratorRegistering is MKRVerifierTest {
+contract facilitatorRegistering is MKRVerifierTest {
   function signMessage(uint256 _pk, string memory _message) public pure returns (bytes memory signature) {
     bytes32 digest = ECDSA.toEthSignedMessageHash(abi.encode(_message));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(_pk, digest);
     signature = abi.encodePacked(r, s, v);
   }
 
-  function test_happy_actor1_moderator() public {
+  function test_happy_actor1_facilitator() public {
     amountToRegister = 500;
     signature = signMessage(actor1Key, message);
 
     vm.expectEmit();
     emit MKRRegistered(actor1, amountToRegister, message);
-    vm.prank(moderator);
+    vm.prank(facilitator);
     mkrVerifier.registerMKRFor(actor1, amountToRegister, message, signature);
 
     assertEq(mkrVerifier.registeredMKR(actor1), amountToRegister);
   }
 
-  function test_revert_nonActor_moderator() public {
+  function test_revert_nonActor_facilitator() public {
     amountToRegister = 500;
     signature = signMessage(nonActorKey, message);
 
     vm.expectRevert(InsufficientMKR.selector);
-    vm.prank(moderator);
+    vm.prank(facilitator);
     mkrVerifier.registerMKRFor(nonActor, amountToRegister, message, signature);
 
     assertEq(mkrVerifier.registeredMKR(nonActor), 0);
   }
 
-  function test_revert_actor_nonModerator() public {
+  function test_revert_actor_nonfacilitator() public {
     amountToRegister = 500;
     signature = signMessage(actor1Key, message);
 
@@ -163,23 +163,23 @@ contract ModeratorRegistering is MKRVerifierTest {
     assertEq(mkrVerifier.registeredMKR(actor1), 0);
   }
 
-  function test_revert_invalidSig_actor_moderator() public {
+  function test_revert_invalidSig_actor_facilitator() public {
     amountToRegister = 500;
     signature = abi.encode("this is not a signature");
 
     vm.expectRevert(InvalidSignature.selector);
-    vm.prank(moderator);
+    vm.prank(facilitator);
     mkrVerifier.registerMKRFor(actor1, amountToRegister, message, signature);
 
     assertEq(mkrVerifier.registeredMKR(actor1), 0);
   }
 
-  function test_revert_insufficientMKR_actor_moderator() public {
+  function test_revert_insufficientMKR_actor_facilitator() public {
     amountToRegister = 5000;
     signature = signMessage(nonActorKey, message);
 
     vm.expectRevert(InsufficientMKR.selector);
-    vm.prank(moderator);
+    vm.prank(facilitator);
     mkrVerifier.registerMKRFor(nonActor, amountToRegister, message, signature);
 
     assertEq(mkrVerifier.registeredMKR(nonActor), 0);

@@ -53,14 +53,14 @@ contract MKRVerifier is IHatsEligibility {
   ERC20Like public constant MKR = ERC20Like(0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2);
 
   /// @notice The Hats Protocol contract
-  IHats public constant HATS = IHats(0x3bc1A0Ad72417f2d411118085256fC53CBdDd137); // v1.hatsproocol.eth
+  IHats public constant HATS = IHats(0x3bc1A0Ad72417f2d411118085256fC53CBdDd137); // v1.hatsprotocol.eth
 
   /*//////////////////////////////////////////////////////////////
                             MUTABLE STATE
   //////////////////////////////////////////////////////////////*/
 
   /// @notice The hat ID of the moderator role
-  uint256 public moderatorHat;
+  uint256 public facilitatorHat;
 
   /// @notice The amount of MKR an ecosystem actor has registered with this contract
   mapping(address ecosystemActor => uint256 registeredAmount) public registeredMKR;
@@ -71,11 +71,11 @@ contract MKRVerifier is IHatsEligibility {
 
   /**
    * @notice Create a new MKRVerifier contract
-   * @param _moderatorHat The hat ID of the moderator role
+   * @param _facilitatorHat The hat ID of the moderator role
    */
-  constructor(uint256 _moderatorHat) {
+  constructor(uint256 _facilitatorHat) {
     // set the moderator hat
-    moderatorHat = _moderatorHat;
+    facilitatorHat = _facilitatorHat;
   }
 
   /*//////////////////////////////////////////////////////////////
@@ -136,7 +136,7 @@ contract MKRVerifier is IHatsEligibility {
     public
   {
     // only the moderator can register MKR for an ecosystem actor
-    if (!HATS.isWearerOfHat(msg.sender, moderatorHat)) revert Unauthorized();
+    if (!HATS.isWearerOfHat(msg.sender, facilitatorHat)) revert Unauthorized();
 
     // verify the signature
     if (!_verifySig(_ecosystemActor, _message, _sig)) revert InvalidSignature();
