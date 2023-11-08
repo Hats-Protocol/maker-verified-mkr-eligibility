@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// import { console2 } from "forge-std/Test.sol"; // uncomment before deploy
+// import { console2 } from "forge-std/Test.sol"; // comment out before deploy
 import { IHatsEligibility } from "hats-protocol/Interfaces/IHatsEligibility.sol";
 import { IHats } from "hats-protocol/Interfaces/IHats.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
@@ -26,7 +26,7 @@ contract MKRVerifier is IHatsEligibility {
   /// @dev Thrown when an ecosystem actor tries to register more MKR than they have
   error InsufficientMKR();
 
-  /// @dev Thrown when a non-moderator tries to register MKR for an ecosystem actor
+  /// @dev Thrown when a non-facilitator tries to register MKR for an ecosystem actor
   error Unauthorized();
 
   /// @dev Thrown when a signature is invalid
@@ -50,7 +50,7 @@ contract MKRVerifier is IHatsEligibility {
   //////////////////////////////////////////////////////////////*/
 
   /// @notice The MKR token contract
-  ERC20Like public constant MKR = ERC20Like(0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2);
+  ERC20Like public immutable MKR;
 
   /// @notice The Hats Protocol contract
   IHats public constant HATS = IHats(0x3bc1A0Ad72417f2d411118085256fC53CBdDd137); // v1.hatsprotocol.eth
@@ -59,8 +59,8 @@ contract MKRVerifier is IHatsEligibility {
                             MUTABLE STATE
   //////////////////////////////////////////////////////////////*/
 
-  /// @notice The hat ID of the moderator role
-  uint256 public facilitatorHat;
+  /// @notice The hat ID of the facilitator role
+  uint256 public immutable FACILITATOR_HAT;
 
   /// @notice The amount of MKR an ecosystem actor has registered with this contract
   mapping(address ecosystemActor => uint256 registeredAmount) public registeredMKR;
@@ -71,11 +71,11 @@ contract MKRVerifier is IHatsEligibility {
 
   /**
    * @notice Create a new MKRVerifier contract
-   * @param _facilitatorHat The hat ID of the moderator role
+   * @param _facilitatorHat The hat ID of the facilitator role
    */
-  constructor(uint256 _facilitatorHat) {
-    // set the moderator hat
-    facilitatorHat = _facilitatorHat;
+  constructor(address _MKR, uint256 _facilitatorHat) {
+    MKR = ERC20Like(_MKR);
+    FACILITATOR_HAT = _facilitatorHat;
   }
 
   /*//////////////////////////////////////////////////////////////
@@ -118,13 +118,13 @@ contract MKRVerifier is IHatsEligibility {
   }
 
   /*//////////////////////////////////////////////////////////////
-                          MODERATOR FUNCTIONS
+                          facilitator FUNCTIONS
   //////////////////////////////////////////////////////////////*/
 
   /**
    * @notice Register an amount of MKR to be used for eligibility verification for an `_ecosystemActor`. The
    * `_ecosystemActor` must have at least as much MKR as the registration `_amount`. Can only be called by a wearer of
-   * the moderator hat.
+   * the facilitator hat.
    * @param _ecosystemActor The ecosystem actor to register MKR for.
    * @param _amount The amount of MKR to register. Must be <= the ecosystem actor's MKR balance.
    * @param _message Raw string representation of the recognition submission message required by
@@ -135,8 +135,8 @@ contract MKRVerifier is IHatsEligibility {
   function registerMKRFor(address _ecosystemActor, uint256 _amount, string calldata _message, bytes calldata _sig)
     public
   {
-    // only the moderator can register MKR for an ecosystem actor
-    if (!HATS.isWearerOfHat(msg.sender, facilitatorHat)) revert Unauthorized();
+    // only the facilitator can register MKR for an ecosystem actor
+    if (!HATS.isWearerOfHat(msg.sender, FACILITATOR_HAT)) revert Unauthorized();
 
     // verify the signature
     if (!_verifySig(_ecosystemActor, _message, _sig)) revert InvalidSignature();
@@ -197,7 +197,7 @@ contract MKRVerifier is IHatsEligibility {
     returns (bool)
   {
     return SignatureCheckerLib.isValidSignatureNowCalldata(
-      _ecosystemActor, SignatureCheckerLib.toEthSignedMessageHash(abi.encode(_message)), _sig
+      _ecosystemActor, SignatureCheckerLib.toEthSignedMessageHash(abi.encodePacked(_message)), _sig
     );
   }
 }

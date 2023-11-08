@@ -18,6 +18,7 @@ contract MKRVerifierTest is Deploy, Test {
   // MKRVerifier public mkrVerifier;
   // bytes32 public SALT;
   // uint256 public facilitatorHat;
+  // address public mkr;
 
   uint256 public fork;
   uint256 public BLOCK_NUMBER = 17_671_864; // deployment block for Hats.sol
@@ -62,7 +63,7 @@ contract MKRVerifierTest is Deploy, Test {
     HATS.mintHat(facilitatorHat, facilitator);
 
     // deploy mkrVerifier via the script
-    prepare(false, facilitatorHat);
+    prepare(false, address(MKR), facilitatorHat);
     run();
 
     // deal MKR to actor1 and actor2
@@ -124,7 +125,7 @@ contract SelfRegistering is MKRVerifierTest {
 
 contract facilitatorRegistering is MKRVerifierTest {
   function signMessage(uint256 _pk, string memory _message) public pure returns (bytes memory signature) {
-    bytes32 digest = ECDSA.toEthSignedMessageHash(abi.encode(_message));
+    bytes32 digest = ECDSA.toEthSignedMessageHash(abi.encodePacked(_message));
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(_pk, digest);
     signature = abi.encodePacked(r, s, v);
   }

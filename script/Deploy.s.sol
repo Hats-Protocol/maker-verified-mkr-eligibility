@@ -6,14 +6,17 @@ import { MKRVerifier } from "../src/MKRVerifier.sol";
 
 contract Deploy is Script {
   MKRVerifier public mkrVerifier;
-  bytes32 public SALT = bytes32(abi.encode("change this to the value of your choice"));
-  uint256 public facilitatorHat;
+  bytes32 public SALT = bytes32(abi.encode(0x4a75));
+  address public mkr = 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2; // mainnet MKR
+  uint256 public facilitatorHat =
+    323_519_771_394_501_307_089_259_385_432_256_433_664_376_508_480_981_965_228_332_365_643_776; // mainnet 12.1.2.1
 
   // default values
-  bool internal _verbose = false;
+  bool internal _verbose = true;
 
   /// @dev Override default values, if desired
-  function prepare(bool verbose, uint256 _facilitatorHat) public {
+  function prepare(bool verbose, address _mkr, uint256 _facilitatorHat) public {
+    mkr = _mkr;
     _verbose = verbose;
     facilitatorHat = _facilitatorHat;
   }
@@ -42,7 +45,7 @@ contract Deploy is Script {
      *       never differs regardless of where its being compiled
      *    2. The provided salt, `SALT`
      */
-    mkrVerifier = new MKRVerifier{ salt: SALT}(facilitatorHat);
+    mkrVerifier = new MKRVerifier{ salt: SALT}(mkr, facilitatorHat);
 
     vm.stopBroadcast();
 
@@ -59,8 +62,9 @@ forge script script/Deploy.s.sol -f mainnet
 forge script script/Deploy.s.sol -f mainnet --broadcast --verify
 
 ## C. Fix verification issues (replace values in curly braces with the actual values)
-forge verify-contract --chain-id 5 --num-of-optimizations 1000000 --watch \
- --compiler-version v0.8.19 0x1b7878735d0d713A90ead372837ADCCedC988970 \
+forge verify-contract --chain-id 1 --num-of-optimizations 1000000 --watch  \
+--constructor-args $(cast abi-encode "constructor(address,uint256)" "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2" 323519771394501307089259385432256433664376508480981965228332365643776 ) \
+ --compiler-version v0.8.21 0x357aafef834e9078203a96e9afb188b5f16fb412 \
  src/MKRVerifier.sol:MKRVerifier --etherscan-api-key $ETHERSCAN_KEY
 
 ## D. To verify ir-optimized contracts on etherscan...
@@ -70,5 +74,4 @@ forge verify-contract --chain-id 5 --num-of-optimizations 1000000 --watch \
   3. Upload the patched `etherscan.json` to etherscan manually
 
   See this github issue for more: https://github.com/foundry-rs/foundry/issues/3507#issuecomment-1465382107
-
 */
